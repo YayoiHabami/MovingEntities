@@ -17,18 +17,23 @@ ax.set_ylim(Y_MIN, Y_MAX)
 ax.set_xticks([])
 ax.set_yticks([])
 
+
+
+# nutrition (栄養)
+nutritions: list[plt.Circle] = []
+
+# entity
+# entityの向いている方向(θ [rad]、右方向 0 rad)のリスト
+entities_directions: list[float] = []
+# [x,y] の組のリスト
+entities_coords: list[list] = []
+entities: list[plt.Circle] = []
 entity_types = {
     "normal": {
         "radius": 1,
         "color": "red"
     }
 }
-
-# entityの向いている方向(θ [rad]、右方向 0 rad)のリスト
-entities_directions: list[float] = []
-# [x,y] の組のリスト
-entities_coords: list[list] = []
-entities: list[plt.Circle] = []
 
 # 指定した座標にエンティティを配置する
 def add_entity(x:float, y:float, *, direction:float=0, entitytype:str="normal"):
@@ -73,7 +78,8 @@ def init():
     initialized = True
 
     init_entities()
-    return entities
+    init_nutritions()
+    return entities + nutritions
 
 def init_entities():
     for n in range(2):
@@ -81,14 +87,21 @@ def init_entities():
         y = random.randrange(Y_MIN,Y_MAX,1)
         add_entity(x,y,entitytype="normal")
 
+def init_nutritions():
+    for n in range(10):
+        x = random.randrange(X_MIN,X_MAX,1)
+        y = random.randrange(Y_MIN,Y_MAX,1)
+        nutritions.append(plt.Circle((x,y),0.5,fc="green"))
+        ax.add_patch(nutritions[-1])
+        
+
 # Animation function to update the frame
 def update(i):
     for n in range(len(entities)):
         move_entity(n)
-    return entities
 
 # Create the animation
-anim = FuncAnimation(fig, update, init_func=init, frames=100, blit=True)
+anim = FuncAnimation(fig, update, init_func=init, frames=100)#, blit=True)
 
 # Display the animation
 plt.show()
