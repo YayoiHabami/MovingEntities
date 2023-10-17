@@ -1,14 +1,15 @@
+from utils import (
+    X_MIN, X_MAX, Y_MIN, Y_MAX,
+    get_random_coords
+)
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.artist import Artist
 import numpy as np
 
 import random
 
-# 定数
-X_MIN = 0
-X_MAX = 100
-Y_MIN = 0
-Y_MAX = 100
 
 # Create the figure and axis
 fig, ax = plt.subplots(figsize=(6,6))
@@ -35,14 +36,22 @@ entity_types = {
     }
 }
 
+# グラフ上にオブジェクトを追加する
+def add_object(object:Artist):
+    ax.add_patch(object)
+
+# 描画用の円形オブジェクトを取得する
+def get_circle(x:float, y:float, *, radius:float=1, fc:str="black") -> plt.Circle:
+    return plt.Circle((x,y), radius, fc=fc)
+
 # 指定した座標にエンティティを配置する
 def add_entity(x:float, y:float, *, direction:float=0, entitytype:str="normal"):
     entities_coords.append([x,y])
     entities_directions.append(direction)
-    entities.append(plt.Circle((x,y),
-                               entity_types[entitytype]["radius"],
+    entities.append(get_circle(x,y,
+                               radius=entity_types[entitytype]["radius"],
                                fc=entity_types[entitytype]["color"]))
-    ax.add_patch(entities[-1])
+    add_object(entities[-1])
 
 # ランダムな移動方向 dθ の元となる正規分布
 # 平均 0 rad, σ=0.7 radのリスト
@@ -83,16 +92,14 @@ def init():
 
 def init_entities():
     for n in range(2):
-        x = random.randrange(X_MIN,X_MAX,1)
-        y = random.randrange(Y_MIN,Y_MAX,1)
+        x,y = get_random_coords()
         add_entity(x,y,entitytype="normal")
 
 def init_nutritions():
     for n in range(10):
-        x = random.randrange(X_MIN,X_MAX,1)
-        y = random.randrange(Y_MIN,Y_MAX,1)
-        nutritions.append(plt.Circle((x,y),0.5,fc="green"))
-        ax.add_patch(nutritions[-1])
+        x,y = get_random_coords()
+        nutritions.append(get_circle(x,y,radius=0.5,fc="green"))
+        add_object(nutritions[-1])
         
 
 # Animation function to update the frame
