@@ -1,7 +1,3 @@
-from utils import (
-    get_random_coords
-)
-
 from abc import ABCMeta, abstractmethod
 import random
 
@@ -14,15 +10,15 @@ class Drawer(metaclass=ABCMeta):
     Y_MAX = 100
 
     @abstractmethod
-    def add_object(object:object) -> object:
+    def add_object(self, object:object) -> object:
         pass
     
     @abstractmethod
-    def add_circle(x:float, y:float, *, radius:float=1, fc:str="black") -> object:
+    def add_circle(self, x:float, y:float, *, radius:float=1, fc:str="black") -> object:
         pass
 
     @abstractmethod
-    def run(update, init=None):
+    def run(self, update, init=None):
         """update: 更新関数, init:初期化関数"""
         pass
 
