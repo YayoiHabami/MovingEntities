@@ -31,3 +31,6 @@ class PltDrawer(Drawer):
 
         # Display the animation
         plt.show()
+
+    def remove_object(self, object:Artist):
+        object.remove()

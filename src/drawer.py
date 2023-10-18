@@ -22,6 +22,10 @@ class Drawer(metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def remove_object(self, object):
+        pass
+
+    @abstractmethod
     def run(self, update, init=None):
         """update: 更新関数, init:初期化関数"""
         pass
