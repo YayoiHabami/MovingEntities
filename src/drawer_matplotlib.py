@@ -22,8 +22,8 @@ class PltDrawer(Drawer):
         self.ax.add_patch(object)
         return object
     
-    def add_circle(self, x: float, y: float, *, radius: float = 1, fc: str = "black") -> object:
-        return self.add_object(plt.Circle((x,y), radius, fc=fc))
+    def add_circle(self, xy, *, radius: float = 1, fc: str = "black") -> object:
+        return self.add_object(plt.Circle((xy[0],xy[1]), radius, fc=fc))
 
     def run(self, update, init=None):
         # Create the animation

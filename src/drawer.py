@@ -1,5 +1,9 @@
+import numpy as np
+
 from abc import ABCMeta, abstractmethod
 import random
+
+
 
 class Drawer(metaclass=ABCMeta):
     
@@ -14,7 +18,7 @@ class Drawer(metaclass=ABCMeta):
         pass
     
     @abstractmethod
-    def add_circle(self, x:float, y:float, *, radius:float=1, fc:str="black") -> object:
+    def add_circle(self, xy, *, radius:float=1, fc:str="black") -> object:
         pass
 
     @abstractmethod
@@ -35,7 +39,10 @@ class Drawer(metaclass=ABCMeta):
 
         return new_coords
 
-    def get_random_coords(self,xmin=X_MIN,xmax=X_MAX,ymin=Y_MIN,ymax=Y_MAX)-> tuple[float]:
+    def get_random_coords(self,xmin=X_MIN,xmax=X_MAX,ymin=Y_MIN,ymax=Y_MAX)-> np.ndarray[float]:
         """指定された領域の中でランダムな位置 (x,y) を返す"""
-        return random.randrange(xmin,xmax,1),random.randrange(ymin,ymax,1)
+        if (xmin==ymin) and (xmax==ymax):
+            return np.random.rand(2)*(xmax-xmin)+xmin
+        else:
+            return np.array([random.randrange(xmin,xmax,1),random.randrange(ymin,ymax,1)])
 
