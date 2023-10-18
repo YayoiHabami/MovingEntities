@@ -80,8 +80,12 @@ class ObjectsManager():
                                 fc=ENTITY_TYPES[entitytype]["color"]))
         
     def remove_entities(self, indices:list[int]):
+        # 死亡時に何個nutritionをまき散らすか
+        entity_spattering_nutritions = 10
+
         indices.sort(reverse=True)
         for idx in indices:
+            center = self.entities_coords[idx]
             self.dr.remove_object(self.entities.pop(idx))
             self.entities_coords = np.delete(self.entities_coords, idx, axis=0)
             self.entities_directions = np.delete(self.entities_directions, idx)
@@ -91,17 +95,28 @@ class ObjectsManager():
             self.entities_attack_dist = np.delete(self.entities_attack_dist, idx)
             self.entities_health_pt = np.delete(self.entities_health_pt, idx)
             self.entities_max_health_pt = np.delete(self.entities_max_health_pt, idx)
+            
+            # entityの死亡に伴いnutritionをまき散らす
+            self.spatter_nutritions(center, entity_spattering_nutritions)
+            
 
-    def add_nutrition(self, x:float, y:float):
-        coords = np.array([x,y])
-        self.nutritions_coords = np.r_[self.nutritions_coords, coords.reshape(1,2)]
-        self.nutritions.append(self.dr.add_circle(coords,radius=0.5,fc="green"))
+    def add_nutrition(self, xy:np.ndarray[float]):
+        self.nutritions_coords = np.r_[self.nutritions_coords, xy.reshape(1,2)]
+        self.nutritions.append(self.dr.add_circle(xy,radius=0.5,fc="green"))
 
     def remove_nutritions(self, indices:list[int]):
         indices.sort(reverse=True)
         for idx in indices:
             self.dr.remove_object(self.nutritions.pop(idx))
             self.nutritions_coords = np.delete(self.nutritions_coords, idx, axis=0)
+    
+    def spatter_nutritions(self, center:np.ndarray[float], count:int):
+        """指定された点を中心にnutritionをまき散らす\n
+        範囲はcenterを中心とする2x2の正方形の中"""
+        for dxy in (np.random.rand(count, 2)*2-1):
+            self.add_nutrition(center+dxy)
+
+
 
 
     # ddirection(方向の差分)およびdirection（方向）はどちらかを選択。ddirectionが優先される
@@ -141,32 +156,34 @@ class ObjectsManager():
     def move_entity_for_nutrition(self, idx:int) -> bool:
         """動きがあった場合はTrue、そうでない場合はFalseを返す"""
         # EntityからNutritionsまでの距離が、視野長以下であるかを判定する
-        ntoo = self.nutritions_coords - self.entities_coords[idx].reshape(1,2)
-        ntoolen = np.sum(np.square(ntoo),1)
-        nutisin = ntoolen<=np.square(self.entities_sight_length[idx])
+        n2o = self.nutritions_coords - self.entities_coords[idx].reshape(1,2)
+        n2olen = np.sum(np.square(n2o),1)
+        nutisin = n2olen<=np.square(self.entities_sight_length[idx])
         if np.max(nutisin)==False:
             # 視野長以内にnutritionが存在しない
             return False
 
         close_sight = 0.25
-        veryclose = np.where(ntoolen<=np.square(self.entities_sight_length[idx]*close_sight))
+        veryclose = np.where(n2olen<=np.square(self.entities_sight_length[idx]*close_sight))
         if len(veryclose[0])>=1:
             # 十分近い位置にnutritionを見つけた場合は、視野方向に関わらずそちらに移動する
             nidx = veryclose[0][0]
         else:
             # 視野方向と栄養のコサイン角(の実数倍)を計算する
             sightvec = np.array((np.cos(self.entities_directions[idx]), np.sin(self.entities_directions[idx])))
-            stoo = (sightvec - self.entities_coords[idx]).reshape(1,2)
-            where = np.where((stoo @ ntoo.T)>=0)
+            s2o = (sightvec - self.entities_coords[idx]).reshape(1,2)
+            cosangle = s2o @ n2o.T
+            where = np.where(cosangle>=0) # 0(左右90°)よりも前
             if len(where[0])==0:
                 # 対象が視界内に存在しない
                 return False
-            nidx = where[0][np.argmin(ntoolen[where[0]])]
+            #nidx = where[0][np.argmax(cosangle[where])] # 目線(真っすぐ)に最も近いもの
+            nidx = where[0][np.argmin(n2olen[where[0]])] # 視界内の最も近いもの
 
         # 移動する
         maxvelocity = 2
-        dxdy = ntoo[nidx]
-        lendxdy = np.sqrt(np.sum(np.square(dxdy)))#,1))
+        dxdy = n2o[nidx]
+        lendxdy = np.sqrt(np.sum(np.square(dxdy)))
         if lendxdy>maxvelocity:
             dxdy *= 2/lendxdy
         ddir = np.arctan2(dxdy[1],dxdy[0])
@@ -240,7 +257,7 @@ class ObjectsManager():
     def init_nutritions(self):
         for n in range(500):
             x,y = self.dr.get_random_coords()
-            self.add_nutrition(x,y)
+            self.add_nutrition(np.array((x,y)))
         
     # Animation function to update the frame
     def update(self, i):
