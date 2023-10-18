@@ -8,14 +8,18 @@ ENTITY_TYPES = {
     "normal": {
         "radius": 1,
         "color": "red",
-        "eyesightLength": 10,
-        "attackDist": 1
+        "eyesightLength": 5,
+        "attackDist": 1,
+        "healthPoint": 100
     }
 }
 
 
 NUTRITION_ID = 1
 ENTITY_ID = 2
+
+# HPと同じ単位
+ENERGY_OF_NUTRITION = 10
 
 class ObjectsManager():
     dr:Drawer
@@ -40,6 +44,9 @@ class ObjectsManager():
     entities_target_idx: np.ndarray[int]
     # 攻撃や捕食の範囲
     entities_attack_dist : np.ndarray[float] 
+    # 体力
+    entities_health_pt: np.ndarray[float]
+    entities_max_health_pt: np.ndarray[float]
 
     def __init__(self, drawer:Drawer) -> None:
         self.nutritions = []
@@ -51,6 +58,8 @@ class ObjectsManager():
         self.entities_target_id = np.arange(0, dtype=int)
         self.entities_target_idx = np.arange(0, dtype=int)
         self.entities_attack_dist = np.arange(0)
+        self.entities_health_pt = np.arange(0)
+        self.entities_max_health_pt = np.arange(0)
 
         self.dr = drawer
 
@@ -63,10 +72,25 @@ class ObjectsManager():
         self.entities_target_id = np.append(self.entities_target_id, 0)
         self.entities_target_idx = np.append(self.entities_target_idx, 0)
         self.entities_attack_dist = np.append(self.entities_attack_dist, ENTITY_TYPES[entitytype]["attackDist"])
+        self.entities_health_pt = np.append(self.entities_health_pt, ENTITY_TYPES[entitytype]["healthPoint"])
+        self.entities_max_health_pt = np.append(self.entities_max_health_pt, ENTITY_TYPES[entitytype]["healthPoint"])
 
         self.entities.append(self.dr.add_circle(coords,
                                 radius=ENTITY_TYPES[entitytype]["radius"],
                                 fc=ENTITY_TYPES[entitytype]["color"]))
+        
+    def remove_entities(self, indices:list[int]):
+        indices.sort(reverse=True)
+        for idx in indices:
+            self.dr.remove_object(self.entities.pop(idx))
+            self.entities_coords = np.delete(self.entities_coords, idx, axis=0)
+            self.entities_directions = np.delete(self.entities_directions, idx)
+            self.entities_sight_length = np.delete(self.entities_sight_length, idx)
+            self.entities_target_id = np.delete(self.entities_target_id, idx)
+            self.entities_target_idx = np.delete(self.entities_target_idx, idx)
+            self.entities_attack_dist = np.delete(self.entities_attack_dist, idx)
+            self.entities_health_pt = np.delete(self.entities_health_pt, idx)
+            self.entities_max_health_pt = np.delete(self.entities_max_health_pt, idx)
 
     def add_nutrition(self, x:float, y:float):
         coords = np.array([x,y])
@@ -96,8 +120,15 @@ class ObjectsManager():
         else:
             self.entities_directions[idx] = direction
 
-        self.entities_coords[idx] = self.dr.keep_coords_within_bounds(newc, self.entities_coords)
+        # entityの新旧座標と、移動速度を求める
+        newc = self.dr.keep_coords_within_bounds(newc, self.entities_coords)
+        oldc = self.entities_coords[idx]
+        spd2 = np.sum(np.square(newc-oldc))
+
+        # entityを移動させる
+        self.entities_coords[idx] = newc
         self.entities[idx].center = tuple(self.entities_coords[idx])
+        self.tire_entity_by_move(idx, spd2)
 
     def move_entity(self, idx:int):
         if self.move_entity_for_nutrition(idx):
@@ -163,8 +194,30 @@ class ObjectsManager():
             self.entities_target_id[entityidx] = targetid
             self.entities_target_idx[entityidx] = targetidx
 
-    def feed_entity(self, idx, *, value=1):
-        pass
+    def feed_entity(self, idx, *, count=1):
+        """entityにnutritionを与える\n
+        count: nutritionの数"""
+        self.recover_entity_hp(idx, count*ENERGY_OF_NUTRITION)
+
+    def tire_entity_by_move(self, idx, speedp2:float):
+        """移動によりentityのHPを減少させる\n
+        speedp2 : 移動量の2乗"""
+
+        # 基礎代謝: （とりあえず）静止時に400ターンで-100(HP)
+        basal_metabolism = 0.25
+        # 移動速度に対する比率: 速度2で100ターン動き続けて-100(HP)
+        ratio = 0.25
+        self.reduce_entity_hp(idx, speedp2*ratio + basal_metabolism)
+        
+    # HPの増加量を指定して増加させる
+    def recover_entity_hp(self, idx, value):
+        self.entities_health_pt[idx] += value
+        if self.entities_health_pt[idx]>self.entities_max_health_pt[idx]:
+            self.entities_health_pt[idx] = self.entities_max_health_pt[idx]
+
+    # HPの減少量を指定して減少させる
+    def reduce_entity_hp(self, idx, value):
+        self.entities_health_pt[idx] -= value
 
 
 
@@ -180,12 +233,12 @@ class ObjectsManager():
         return self.entities + self.nutritions
 
     def init_entities(self):
-        for n in range(10):
+        for n in range(30):
             x,y = self.dr.get_random_coords()
             self.add_entity(x,y,entitytype="normal")
 
     def init_nutritions(self):
-        for n in range(50):
+        for n in range(500):
             x,y = self.dr.get_random_coords()
             self.add_nutrition(x,y)
         
@@ -194,10 +247,11 @@ class ObjectsManager():
         for n in range(len(self.entities)):
             self.move_entity(n)
         
-        self.update_nutrition()
+        self.update_nutritions()
+        self.update_entities()
     
     # entityの捕食などを処理する
-    def update_nutrition(self):
+    def update_nutritions(self):
         targetings = np.where(self.entities_target_id==NUTRITION_ID)
         dists = np.full(len(targetings[0]), np.inf)
         for i, idx in enumerate(targetings[0]):
@@ -228,11 +282,11 @@ class ObjectsManager():
         for eidx in feeding_entities:
             self.feed_entity(eidx)
 
-            
-            
+    def update_entities(self):
+        # 体力が0以下になったentityを取り除く
+        hp0 = np.where(self.entities_health_pt<=0)
+        self.remove_entities(list(hp0[0]))
 
-        
-        
-    
     def run(self):
         self.dr.run(update=self.update, init=self.init)
+
