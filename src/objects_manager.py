@@ -1,3 +1,7 @@
+from chunks import (
+    Chunk,
+    create_chunks
+)
 from drawer import Drawer
 
 import numpy as np
@@ -24,6 +28,14 @@ ENERGY_OF_NUTRITION = 10
 class ObjectsManager():
     dr:Drawer
 
+    # chunk
+    # 世界全体の縦横
+    width:int
+    height:int
+    # チャンクの詳細
+    chunk_width:int
+    chunks:list[list[Chunk]]
+
     # nutrition (栄養)
     # 描画するオブジェクトのリスト
     nutritions: list
@@ -48,7 +60,12 @@ class ObjectsManager():
     entities_health_pt: np.ndarray[float]
     entities_max_health_pt: np.ndarray[float]
 
-    def __init__(self, drawer:Drawer) -> None:
+    def __init__(self, drawer:Drawer,*, width:int=100, height:int=100, chunkwidth:int=20, seed:int=None) -> None:
+        assert width % chunkwidth == 0
+        assert height % chunkwidth == 0
+        self.width = width
+        self.height = height
+
         self.nutritions = []
         self.nutritions_coords = np.arange(0).reshape(0,2)
         self.entities = []
@@ -62,6 +79,21 @@ class ObjectsManager():
         self.entities_max_health_pt = np.arange(0)
 
         self.dr = drawer
+        self.dr.update_bounds_limit(xmin=0,xmax=width,ymin=0,ymax=height)
+        self.init_chunks(chunkwidth, seed)
+    
+    # チャンクの初期化
+    def init_chunks(self, chunkwidth:int, seed:int):
+        self.chunk_width = chunkwidth
+        if seed is not None:
+            self.chunks = create_chunks(chunkwidth,self.width,self.height, seed=seed)
+        else:
+            self.chunks = create_chunks(chunkwidth,self.width,self.height)
+        
+        # チャンクの描画
+        for i in range(len(self.chunks)):
+            for j in range(len(self.chunks[0])):
+                self.dr.add_object(self.chunks[i][j].patch)
 
     # 指定した座標にエンティティを配置する
     def add_entity(self, x:float, y:float, *, direction:float=0, entitytype:str="normal"):

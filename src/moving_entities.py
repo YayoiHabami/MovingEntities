@@ -5,5 +5,5 @@ from drawer_matplotlib import (
 )
 
 if __name__ == "__main__":
-    om = ObjectsManager(PltDrawer())
+    om = ObjectsManager(PltDrawer(),width=200,height=200,chunkwidth=10)
     om.run()

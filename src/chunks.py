@@ -62,3 +62,20 @@ def get_chunk_type(eigenvalue:float) -> int:
     if eigenvalue<=18:
         return PERIPHERAL_MEADOWS
     return DESERT
+
+def create_chunks(chunk_width:int, world_width:int, world_height:int,*, seed:int=72) -> list[list[Chunk]]:
+    xcount = int(world_width/chunk_width)
+    ycount = int(world_height/chunk_width)
+
+    # チャンクを生成
+    chunks:list[list[Chunk]] = []
+    for i in range(xcount):
+        _chunks = []
+        for j in range(ycount):
+            pn = pnoise(i/xcount,j/ycount,seed)
+            chunk = Chunk(pn, chunk_width, chunk_width*i,chunk_width*j)
+
+            _chunks.append(chunk)
+        chunks.append(_chunks)
+
+    return chunks
