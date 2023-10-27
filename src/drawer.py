@@ -8,10 +8,16 @@ import random
 class Drawer(metaclass=ABCMeta):
     
     # 領域
-    X_MIN = 0
-    X_MAX = 100
-    Y_MIN = 0
-    Y_MAX = 100
+    X_MIN:int = 0
+    X_MAX:int = 100
+    Y_MIN:int = 0
+    Y_MAX:int = 100
+
+    @abstractmethod
+    def update_bounds_limit(self, *, xmin:int=None, xmax:int=None, 
+                            ymin:int=None, ymax:int=None):
+        """境界値の更新"""
+        pass
 
     @abstractmethod
     def add_object(self, object:object) -> object:

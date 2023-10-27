@@ -17,6 +17,25 @@ class PltDrawer(Drawer):
         self.ax.set_yticks([])
 
         super().__init__()
+
+    def update_bounds_limit(self, *, xmin:int=None, xmax:int=None, ymin:int=None, ymax:int=None):
+        updated = False
+        if xmin is not None:
+            self.X_MIN = xmin
+            updated = True
+        if xmax is not None:
+            self.X_MAX = xmax
+            updated = True
+        if ymin is not None:
+            self.Y_MIN = ymin
+            updated = True
+        if ymax is not None:
+            self.Y_MAX = ymax
+            updated = True
+        
+        if updated:
+            self.ax.set_xlim(self.X_MIN, self.X_MAX)
+            self.ax.set_ylim(self.Y_MIN, self.Y_MAX)
     
     def add_object(self, object:Artist) -> Artist:
         self.ax.add_patch(object)

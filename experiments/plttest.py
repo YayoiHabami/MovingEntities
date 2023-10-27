@@ -21,7 +21,7 @@ class EasyPlt:
         self.ax.set_yticks([])
     
     def update_bounds_limit(self, *, xmin=None, xmax=None, ymin=None, ymax=None):
-        # 値の更新
+        """境界値の更新"""
         updated = False
         if xmin is not None:
             self.X_MIN = xmin
