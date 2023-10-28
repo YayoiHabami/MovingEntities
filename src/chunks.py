@@ -85,19 +85,13 @@ def create_chunks(chunk_width:int, world_width:int, world_height:int,*, seed:int
 
     # チャンクを生成
     chunks:list[list[Chunk]] = []
-    chtypes = {}
     for i in range(xcount):
         _chunks = []
         for j in range(ycount):
             pn = pnoise(i/xcount,j/ycount,seed)
             chunk = Chunk(pn, chunk_width, chunk_width*i,chunk_width*j)
 
-            if chunk.chunk_type not in chtypes:
-                chtypes[chunk.chunk_type] = 0
-            chtypes[chunk.chunk_type] += 1
-
             _chunks.append(chunk)
         chunks.append(_chunks)
-    print(chtypes)
 
     return chunks
