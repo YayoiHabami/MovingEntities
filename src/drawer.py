@@ -57,7 +57,7 @@ class Drawer(metaclass=ABCMeta):
 
         return new_coords
 
-    def get_random_coords(self,xmin:float=None,xmax:float=None,ymin:float=None,ymax:float=None)-> np.ndarray[float]:
+    def get_random_coords(self,xmin:float=None,xmax:float=None,ymin:float=None,ymax:float=None,*,count=1)-> np.ndarray[float]:
         """指定された領域の内、有効な範囲についてランダムな位置 (x,y) を返す\n
         指定されない場合は描画領域全体を対象とする"""
         xmin = self.X_MIN if xmin is None else xmin
@@ -65,8 +65,7 @@ class Drawer(metaclass=ABCMeta):
         ymin = self.Y_MIN if ymin is None else ymin
         ymax = self.Y_MAX if ymax is None else ymax
 
-        if (xmin==ymin) and (xmax==ymax):
-            return np.random.rand(2)*(xmax-xmin)+xmin
-        else:
-            return np.array([random.randrange(xmin,xmax,1),random.randrange(ymin,ymax,1)])
+        xs = (xmax-xmin)*np.random.rand(count) + xmin
+        ys = (ymax-ymin)*np.random.rand(count) + ymin
+        return np.c_[xs,ys]
 

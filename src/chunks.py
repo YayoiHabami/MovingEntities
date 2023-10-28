@@ -2,10 +2,18 @@ from matplotlib.patches import Rectangle
 import noise
 
 # 定数
+# 気候の値
 DEEP_MEADOWS = 2
 MEADOWS = 1
 PERIPHERAL_MEADOWS = 3
 DESERT = 0
+# 気候ごとのnutrition生成量
+NUTRITION_PRODUCTION = {
+    DEEP_MEADOWS: 18,
+    MEADOWS: 20,
+    PERIPHERAL_MEADOWS: 10,
+    DESERT: 0
+}
 
 colors = [
     # 緑地深部 (4)
@@ -32,15 +40,23 @@ class Chunk():
     left: int
     patch: Rectangle
 
+    base_production: int
+    """nutritionの生成量"""
+
     def __init__(self, value:float, width:int, left:int, bottom:int) -> None:
         """value:ノイズから生成された値 [-1,1]\n
         left/bottom: 左下の(x,y)座標"""
+        self.left = left
+        self.bottom = bottom
+        self.width = width
+
         self.eigenvalue = (value+1)*len(colors)/2
         self.patch = Rectangle(xy=(left,bottom), 
                                width=width, height=width, 
                                fc=colors[int(self.eigenvalue)], 
                                alpha=0.5)
         self.chunk_type = get_chunk_type(self.eigenvalue)
+        self.base_production = NUTRITION_PRODUCTION[self.chunk_type]
 
 
 # 関数
@@ -55,11 +71,11 @@ def pnoise(x:float,y:float, seed:int,*,wavecount:int=5,octaves:int=3,persistence
 
 def get_chunk_type(eigenvalue:float) -> int:
     """チャンクの型を計算する"""
-    if eigenvalue<=3:
+    if eigenvalue<=4:
         return DEEP_MEADOWS
-    if eigenvalue<=9:
+    if eigenvalue<=10:
         return MEADOWS
-    if eigenvalue<=18:
+    if eigenvalue<=19:
         return PERIPHERAL_MEADOWS
     return DESERT
 
@@ -69,13 +85,19 @@ def create_chunks(chunk_width:int, world_width:int, world_height:int,*, seed:int
 
     # チャンクを生成
     chunks:list[list[Chunk]] = []
+    chtypes = {}
     for i in range(xcount):
         _chunks = []
         for j in range(ycount):
             pn = pnoise(i/xcount,j/ycount,seed)
             chunk = Chunk(pn, chunk_width, chunk_width*i,chunk_width*j)
 
+            if chunk.chunk_type not in chtypes:
+                chtypes[chunk.chunk_type] = 0
+            chtypes[chunk.chunk_type] += 1
+
             _chunks.append(chunk)
         chunks.append(_chunks)
+    print(chtypes)
 
     return chunks

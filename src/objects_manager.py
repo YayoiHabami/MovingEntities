@@ -99,9 +99,8 @@ class ObjectsManager():
                 self.dr.add_object(self.chunks[i][j].patch)
 
     # 指定した座標にエンティティを配置する
-    def add_entity(self, x:float, y:float, *, direction:float=0, entitytype:str="normal"):
-        coords = np.array([x,y])
-        self.entities_coords = np.r_[self.entities_coords, coords.reshape(1,2)]
+    def add_entity(self, xy:np.ndarray[float], *, direction:float=0, entitytype:str="normal"):
+        self.entities_coords = np.r_[self.entities_coords, xy.reshape(1,2)]
         self.entities_directions = np.append(self.entities_directions, direction)
         self.entities_sight_length = np.append(self.entities_sight_length, ENTITY_TYPES[entitytype]["eyesightLength"])
         self.entities_target_id = np.append(self.entities_target_id, 0)
@@ -110,7 +109,7 @@ class ObjectsManager():
         self.entities_health_pt = np.append(self.entities_health_pt, ENTITY_TYPES[entitytype]["healthPoint"])
         self.entities_max_health_pt = np.append(self.entities_max_health_pt, ENTITY_TYPES[entitytype]["healthPoint"])
 
-        self.entities.append(self.dr.add_circle(coords,
+        self.entities.append(self.dr.add_circle(xy,
                                 radius=ENTITY_TYPES[entitytype]["radius"],
                                 fc=ENTITY_TYPES[entitytype]["color"]))
         
@@ -285,14 +284,28 @@ class ObjectsManager():
         return self.entities + self.nutritions
 
     def init_entities(self):
-        for n in range(30):
-            x,y = self.dr.get_random_coords()
-            self.add_entity(x,y,entitytype="normal")
+        xys = self.dr.get_random_coords(count=30)
+        for xy in xys:
+            self.add_entity(xy,entitytype="normal")
 
     def init_nutritions(self):
-        for n in range(500):
-            x,y = self.dr.get_random_coords()
-            self.add_nutrition(np.array((x,y)))
+        # 初期生成量をベース生成量の何倍にするか
+        ratio = 1
+        
+        for i in range(len(self.chunks)):
+            for j in range(len(self.chunks[0])):
+                xm = self.chunks[i][j].left
+                ym = self.chunks[i][j].bottom
+                w = self.chunks[i][j].width
+                base_production = self.chunks[i][j].base_production
+                if base_production<=0:
+                    continue
+
+                xys = self.dr.get_random_coords(xmin=xm,xmax=xm+w,
+                                                ymin=ym,ymax=ym+w,
+                                                count=base_production*ratio)
+                for xy in xys:
+                    self.add_nutrition(xy)
         
     # Animation function to update the frame
     def update(self, i):
