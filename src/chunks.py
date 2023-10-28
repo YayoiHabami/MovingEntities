@@ -18,10 +18,10 @@ NUTRITION_PRODUCTION = {
 colors = [
     # 緑地深部 (4)
     "#008822","#099128","#119a2d","#1aa333",
-    # 緑地 (6)
-    "#22AC38","#34b034","#46b430","#59b82c","#6bbb27","#7dbf23",
-    # 緑地縁部 (9)
-    "#8FC31F","#97c61b","#9fc917","#a7cc13","#afcf10","#b7d20c","#bfd508","#c7d804","#CFDB00",
+    # 緑地 (8)
+    "#22AC38","#34b034","#46b430","#59b82c","#6bbb27","#7dbf23","#8FC31F","#97c61b",
+    # 緑地縁部 (7)
+    "#9fc917","#a7cc13","#afcf10","#b7d20c","#bfd508","#c7d804","#CFDB00",
     # 砂地 (23)
     "#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77",
     "#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77","#FFDD77",
@@ -73,7 +73,7 @@ def get_chunk_type(eigenvalue:float) -> int:
     """チャンクの型を計算する"""
     if eigenvalue<=4:
         return DEEP_MEADOWS
-    if eigenvalue<=10:
+    if eigenvalue<=12:
         return MEADOWS
     if eigenvalue<=19:
         return PERIPHERAL_MEADOWS
