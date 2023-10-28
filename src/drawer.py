@@ -36,6 +36,14 @@ class Drawer(metaclass=ABCMeta):
         """update: 更新関数, init:初期化関数"""
         pass
 
+    @abstractmethod
+    def stop(self):
+        pass
+
+    @abstractmethod
+    def close(self):
+        pass
+
     def keep_coords_within_bounds(self, new_coords:list[float], old_coords:list[float]) -> list[float]:
         if new_coords[0]>self.X_MAX:
             new_coords[0] = self.X_MAX

@@ -44,12 +44,19 @@ class PltDrawer(Drawer):
     def add_circle(self, xy, *, radius: float = 1, fc: str = "black") -> object:
         return self.add_object(plt.Circle((xy[0],xy[1]), radius, fc=fc))
 
+    anim:FuncAnimation = None
     def run(self, update, init=None):
         # Create the animation
         self.anim = FuncAnimation(self.fig, update, init_func=init, frames=100)#, blit=True)
 
         # Display the animation
         plt.show()
+    
+    def stop(self):
+        self.anim.event_source.stop()
+    
+    def close(self):
+        plt.close('all')
 
     def remove_object(self, object:Artist):
         object.remove()

@@ -27,6 +27,9 @@ ENERGY_OF_NUTRITION = 10
 
 class ObjectsManager():
     dr:Drawer
+    # 設定
+    stop_animation_when_entities_become_extinct = True
+    close_window_when_entities_become_extinct = True
 
     # chunk
     # 世界全体の縦横
@@ -335,6 +338,12 @@ class ObjectsManager():
         # 体力が0以下になったentityを取り除く
         hp0 = np.where(self.entities_health_pt<=0)
         self.remove_entities(list(hp0[0]))
+
+        if self.stop_animation_when_entities_become_extinct:
+            if len(self.entities)==0:
+                self.dr.stop()
+                if self.close_window_when_entities_become_extinct:
+                    self.dr.close()
 
     def run(self):
         self.dr.run(update=self.update, init=self.init)
